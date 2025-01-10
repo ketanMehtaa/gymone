@@ -19,7 +19,8 @@ interface Gym {
 
 export default function NewMemberPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [formData, setFormData] = useState<FormData>({
@@ -32,26 +33,32 @@ export default function NewMemberPage() {
   });
 
   useEffect(() => {
-    fetchGyms();
+    const loadData = async () => {
+      setLoading(true);
+      setError('');
+      
+      try {
+        const res = await fetch('/api/gyms');
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch gym list');
+        }
+
+        setGyms(data.data);
+        if (data.data.length > 0) {
+          setFormData(prev => ({ ...prev, gymId: data.data[0].id }));
+        }
+      } catch (err) {
+        console.error('Error loading gyms:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load gym list');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
-
-  const fetchGyms = async () => {
-    try {
-      const res = await fetch('/api/gyms');
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch gyms');
-      }
-
-      setGyms(data.gyms);
-      if (data.gyms.length > 0) {
-        setFormData(prev => ({ ...prev, gymId: data.gyms[0].id }));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch gyms');
-    }
-  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -65,7 +72,7 @@ export default function NewMemberPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setError('');
 
     try {
@@ -86,11 +93,31 @@ export default function NewMemberPage() {
       router.push('/dashboard/members');
       router.refresh();
     } catch (err) {
+      console.error('Error creating member:', err);
       setError(err instanceof Error ? err.message : 'Failed to create member');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="space-y-3">
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -234,10 +261,10 @@ export default function NewMemberPage() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {loading ? 'Creating...' : 'Create Member'}
+                {submitting ? 'Creating...' : 'Create Member'}
               </button>
             </div>
           </form>

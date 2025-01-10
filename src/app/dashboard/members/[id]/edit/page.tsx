@@ -19,7 +19,8 @@ interface Gym {
 
 export default function EditMemberPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [formData, setFormData] = useState<FormData>({
@@ -32,45 +33,49 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
   });
 
   useEffect(() => {
-    Promise.all([fetchMember(), fetchGyms()]);
+    const loadData = async () => {
+      setLoading(true);
+      setError('');
+      
+      try {
+        const [memberRes, gymsRes] = await Promise.all([
+          fetch(`/api/members/${params.id}`),
+          fetch('/api/gyms')
+        ]);
+
+        const [memberData, gymsData] = await Promise.all([
+          memberRes.json(),
+          gymsRes.json()
+        ]);
+
+        if (!memberRes.ok) {
+          throw new Error(memberData.error || 'Failed to fetch member');
+        }
+
+        if (!gymsRes.ok) {
+          throw new Error(gymsData.error || 'Failed to fetch gym list');
+        }
+
+        setFormData({
+          firstName: memberData.member.firstName,
+          lastName: memberData.member.lastName,
+          email: memberData.member.email,
+          phone: memberData.member.phone,
+          status: memberData.member.status,
+          gymId: memberData.member.gymId,
+        });
+
+        setGyms(gymsData.data);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [params.id]);
-
-  const fetchMember = async () => {
-    try {
-      const res = await fetch(`/api/members/${params.id}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch member');
-      }
-
-      setFormData({
-        firstName: data.member.firstName,
-        lastName: data.member.lastName,
-        email: data.member.email,
-        phone: data.member.phone,
-        status: data.member.status,
-        gymId: data.member.gymId,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch member');
-    }
-  };
-
-  const fetchGyms = async () => {
-    try {
-      const res = await fetch('/api/gyms');
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch gyms');
-      }
-
-      setGyms(data.gyms);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch gyms');
-    }
-  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -84,7 +89,7 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setError('');
 
     try {
@@ -105,11 +110,31 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
       router.push(`/dashboard/members/${params.id}`);
       router.refresh();
     } catch (err) {
+      console.error('Error updating member:', err);
       setError(err instanceof Error ? err.message : 'Failed to update member');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="space-y-3">
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -253,10 +278,10 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {submitting ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

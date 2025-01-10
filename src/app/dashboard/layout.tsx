@@ -1,14 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className: string }>;
-}
 
 import {
   HomeIcon,
@@ -20,10 +14,9 @@ import {
   ArrowLeftOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 
-const navigation: NavItem[] = [
+const navigation = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
   { name: 'Members', href: '/dashboard/members', icon: UserGroupIcon },
-  { name: 'Schedule', href: '/dashboard/schedule', icon: CalendarIcon },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCardIcon },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
@@ -37,6 +30,29 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeMembers: 0,
+    monthlyRevenue: 0,
+    checkInsToday: 0,
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (!res.ok) {
+          throw new Error('Failed to fetch stats');
+        }
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    }
+
+    fetchStats();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -122,10 +138,19 @@ export default function DashboardLayout({
               onClick={handleLogout}
               className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
             >
-              <ArrowLeftOnRectangleIcon
+              <svg
                 className="w-6 h-6 mr-3 text-gray-400"
-                aria-hidden="true"
-              />
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
               Logout
             </button>
           </div>

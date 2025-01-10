@@ -50,8 +50,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
         firstName: true,
         lastName: true,
         password: true,
-        gyms: {
-          take: 1,
+        gym: {
           select: {
             id: true
           }
@@ -68,7 +67,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
           email: admin.email,
           name: `${admin.firstName} ${admin.lastName}`,
           role: 'ADMIN',
-          gymId: admin.gyms[0]?.id
+          gymId: admin.gym?.id
         };
       }
       debug('Admin password invalid');

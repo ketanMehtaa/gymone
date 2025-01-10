@@ -13,17 +13,34 @@ import TodayCheckIns from './components/TodayCheckIns';
 interface DashboardStats {
   totalMembers: number;
   activeMembers: number;
-  totalRevenue: number;
+  monthlyRevenue: number;
   checkInsToday: number;
 }
 
 export default function DashboardPage() {
-  const stats: DashboardStats = {
-    totalMembers: 150,
-    activeMembers: 120,
-    totalRevenue: 15000,
-    checkInsToday: 25,
-  };
+  const [stats, setStats] = useState<DashboardStats>({
+    totalMembers: 0,
+    activeMembers: 0,
+    monthlyRevenue: 0,
+    checkInsToday: 0,
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (!res.ok) {
+          throw new Error('Failed to fetch stats');
+        }
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    }
+
+    fetchStats();
+  }, []);
 
   const quickActions = [
     {
@@ -107,10 +124,10 @@ export default function DashboardPage() {
               <div className="ml-4 sm:ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Revenue
+                    Revenue This Month
                   </dt>
                   <dd className="text-base sm:text-lg font-medium text-gray-900">
-                    ${stats.totalRevenue.toLocaleString()}
+                    ${stats.monthlyRevenue.toLocaleString()}
                   </dd>
                 </dl>
               </div>

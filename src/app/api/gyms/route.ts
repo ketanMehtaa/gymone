@@ -1,28 +1,50 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { debug } from '@/lib/debug';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
-    debug('Fetching all gyms');
+    const token = cookies().get('token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    const gyms = await prisma.gym.findMany({
+    const payload = await verifyToken(token);
+    
+    if (!payload?.gymId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const gym = await prisma.gym.findUnique({
+      where: {
+        id: payload.gymId
+      },
       select: {
         id: true,
         name: true,
       },
-      orderBy: {
-        name: 'asc',
-      },
     });
 
-    debug('Successfully fetched gyms', { data: { count: gyms.length } });
+    if (!gym) {
+      return NextResponse.json(
+        { error: 'Gym not found' },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json({ gyms });
+    return NextResponse.json({ data: [gym] });
   } catch (error) {
-    debug('Error fetching gyms', { level: 'error', data: error });
+    console.error('Error fetching gym:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch gyms' },
+      { error: 'Failed to fetch gym' },
       { status: 500 }
     );
   }

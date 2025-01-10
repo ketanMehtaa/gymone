@@ -1,56 +1,89 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { debug } from '@/lib/debug';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
-    debug('Fetching dashboard stats');
+    const token = cookies().get('token')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    // Get total members count
-    const totalMembers = await prisma.member.count();
+    const payload = await verifyToken(token);
+    if (!payload?.gymId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    // Get active members count
-    const activeMembers = await prisma.member.count({
-      where: {
-        status: 'ACTIVE',
-      },
-    });
-
-    // Get total revenue (sum of all membership payments)
-    const totalRevenueResult = await prisma.membership.aggregate({
-      _sum: {
-        amount: true,
-      },
-    });
-    const totalRevenue = totalRevenueResult._sum.amount || 0;
-
-    // Get today's check-ins
+    // Get the start of today and this month
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    const checkInsToday = await prisma.attendance.count({
-      where: {
-        checkIn: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-    });
-
-    const stats = {
+    // Fetch all stats in parallel
+    const [
       totalMembers,
       activeMembers,
-      totalRevenue,
+      monthlyRevenue,
+      checkInsToday
+    ] = await Promise.all([
+      // Total members count
+      prisma.member.count({
+        where: {
+          gymId: payload.gymId,
+        },
+      }),
+
+      // Active members count
+      prisma.member.count({
+        where: {
+          gymId: payload.gymId,
+          status: 'ACTIVE',
+        },
+      }),
+
+      // Total revenue this month
+      prisma.payment.aggregate({
+        where: {
+          gymId: payload.gymId,
+          status: 'COMPLETED',
+          paymentDate: {
+            gte: startOfMonth,
+          },
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+
+      // Check-ins today
+      prisma.attendance.count({
+        where: {
+          gymId: payload.gymId,
+          checkIn: {
+            gte: today,
+          },
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      totalMembers,
+      activeMembers,
+      monthlyRevenue: monthlyRevenue._sum.amount || 0,
       checkInsToday,
-    };
-
-    debug('Successfully fetched dashboard stats', { data: stats });
-
-    return NextResponse.json(stats);
+    });
   } catch (error) {
-    debug('Error fetching dashboard stats', { level: 'error', data: error });
+    console.error('Error fetching dashboard stats:', error);
     return NextResponse.json(
       { error: 'Failed to fetch dashboard stats' },
       { status: 500 }
