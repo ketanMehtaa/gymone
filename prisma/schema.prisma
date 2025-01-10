@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Remember to hash passwords!
+  firstName String
+  lastName  String
+  gyms      Gym[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Track admin actions
+  createdMemberships Membership[] @relation("AdminMemberships")
+  createdAttendances Attendance[] @relation("AdminAttendances")
+
+  @@index([email])
+}
+
+model Gym {
+  id              String         @id @default(uuid())
+  name            String
+  address         String
+  phone           String
+  email           String         @unique
+  totalRevenue    Decimal        @default(0)
+  totalMembers    Int            @default(0)
+  admin           Admin          @relation(fields: [adminId], references: [id])
+  adminId         String
+  staff           Staff[]
+  members         Member[]
+  memberships     Membership[]
+  payments        Payment[]
+  attendances     Attendance[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([adminId])
+}
+
+model Staff {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  firstName String
+  lastName  String
+  isActive  Boolean   @default(true)
+  gym       Gym       @relation(fields: [gymId], references: [id])
+  gymId     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  createdMemberships Membership[] @relation("StaffMemberships")
+  createdAttendances Attendance[] @relation("StaffAttendances")
+
+  @@index([gymId])
+  @@index([email])
+}
+
+model Member {
+  id           String        @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String        
+  phone        String
+  status       MemberStatus  @default(ACTIVE)
+  gym          Gym          @relation(fields: [gymId], references: [id])
+  gymId        String
+  memberships  Membership[]
+  attendances  Attendance[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([email, gymId])
+  @@index([gymId])
+}
+
+model Membership {
+  id          String         @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  amount      Decimal
+  status      PaymentStatus  @default(ACTIVE)
+  member      Member         @relation(fields: [memberId], references: [id])
+  memberId    String
+  gym         Gym           @relation(fields: [gymId], references: [id])
+  gymId       String
+  
+  // Optional relations to track who created/updated
+  createdByAdmin Admin?     @relation("AdminMemberships", fields: [adminId], references: [id])
+  adminId       String?
+  createdByStaff Staff?     @relation("StaffMemberships", fields: [staffId], references: [id])
+  staffId       String?
+  
+  payments    Payment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([gymId])
+  @@index([memberId])
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  amount       Decimal
+  paymentDate  DateTime      @default(now())
+  method       PaymentMethod
+  status       PaymentStatus @default(PENDING)
+  membership   Membership    @relation(fields: [membershipId], references: [id])
+  membershipId String
+  gym          Gym          @relation(fields: [gymId], references: [id])
+  gymId        String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([gymId])
+  @@index([membershipId])
+}
+
+model Attendance {
+  id        String    @id @default(uuid())
+  checkIn   DateTime  @default(now())
+  checkOut  DateTime?
+  member    Member    @relation(fields: [memberId], references: [id])
+  memberId  String
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  gymId     String
+  
+  // Optional relations to track who created/updated
+  createdByAdmin Admin?     @relation("AdminAttendances", fields: [adminId], references: [id])
+  adminId       String?
+  createdByStaff Staff?     @relation("StaffAttendances", fields: [staffId], references: [id])
+  staffId       String?
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([gymId])
+  @@index([memberId])
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  ACTIVE
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  UPI
+} 
