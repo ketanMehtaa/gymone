@@ -1,59 +1,50 @@
-// Protecting routes with next-auth
-// https://next-auth.js.org/configuration/nextjs#middleware
-// https://nextjs.org/docs/app/building-your-application/routing/middleware
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAuth } from '@/lib/jwt';
-
-// Public routes that don't require authentication
-const publicRoutes = ['/'];
+import { verifyToken } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
+  // Paths that don't require authentication
+  const publicPaths = ['/', '/login', '/register'];
+  const isPublicPath = publicPaths.includes(pathname);
 
-  // Check for auth token
+  // Get token from cookie
   const token = request.cookies.get('token')?.value;
 
-  // Redirect to login if no token found
-  if (!token) {
-    console.log('No token found, redirecting to login');
-    const url = new URL('/', request.url);
-    return NextResponse.redirect(url);
+  // If path is public and user is logged in, redirect to dashboard
+  if (isPublicPath && token) {
+    try {
+      const payload = await verifyToken(token);
+      if (payload) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    } catch (error) {
+      // Invalid token, let them access public routes
+    }
   }
 
-  try {
-    // Verify token
-    const verifiedToken = await verifyAuth(token);
-    if (!verifiedToken) {
-      console.log('Invalid token, redirecting to login');
-      throw new Error('Invalid token');
-    }
-    console.log('Token verified, proceeding to:', pathname);
-    return NextResponse.next();
-  } catch (error) {
-    // Token is invalid
-    console.log('Token verification failed, redirecting to login');
-    const url = new URL('/', request.url);
-    return NextResponse.redirect(url);
+  // If path is not public and user is not logged in, redirect to login
+  if (!isPublicPath && !token) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
+
+  return NextResponse.next();
 }
 
-// Add routes that should be protected
+// Configure which routes to run middleware on
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
+     * Match all request paths except:
      * - api/auth (auth API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)'
-  ]
-};
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public/).*)',
+  ],
+}; 

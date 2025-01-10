@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { debug } from '@/lib/debug';
 
 export async function POST() {
-  const response = NextResponse.json({ success: true }, { status: 200 });
+  try {
+    debug('Logout attempt started');
 
-  response.cookies.set('token', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    expires: new Date(0)
-  });
+    // Clear the auth cookie
+    cookies().delete('token');
 
-  return response;
-}
+    debug('Logout successful - cookie cleared');
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    debug('Logout error occurred', { 
+      level: 'error', 
+      data: error 
+    });
+    
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+} 

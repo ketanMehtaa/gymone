@@ -16,7 +16,7 @@ model Admin {
   password  String   // Remember to hash passwords!
   firstName String
   lastName  String
-  gyms      Gym[]
+  gym       Gym?     // Optional because gym might not be created yet when admin is created
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -36,7 +36,7 @@ model Gym {
   totalRevenue    Decimal        @default(0)
   totalMembers    Int            @default(0)
   admin           Admin          @relation(fields: [adminId], references: [id])
-  adminId         String
+  adminId         String         @unique  // Make this unique as one admin can only have one gym
   staff           Staff[]
   members         Member[]
   memberships     Membership[]

@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { hash } from "bcrypt";
 import {
   MemberStatus,
   PaymentStatus,
@@ -33,11 +32,10 @@ async function main() {
   await clearDatabase();
 
   // Create Admin
-  const hashedPassword = await hash("admin123", 10);
   const admin = await prisma.admin.create({
     data: {
       email: "admin@gymone.com",
-      password: hashedPassword,
+      password: "admin123",
       firstName: "John",
       lastName: "Doe",
     },
@@ -60,7 +58,7 @@ async function main() {
   const staff1 = await prisma.staff.create({
     data: {
       email: "staff1@gymone.com",
-      password: await hash("staff123", 10),
+      password: "staff123",
       firstName: "Jane",
       lastName: "Smith",
       isActive: true,
@@ -71,7 +69,7 @@ async function main() {
   const staff2 = await prisma.staff.create({
     data: {
       email: "staff2@gymone.com",
-      password: await hash("staff123", 10),
+      password: "staff123",
       firstName: "Mike",
       lastName: "Johnson",
       isActive: true,
