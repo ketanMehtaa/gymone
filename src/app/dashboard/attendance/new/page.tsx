@@ -10,6 +10,12 @@ interface Member {
   lastName: string;
   email: string;
   status: string;
+  memberships: Array<{
+    id: string;
+    startDate: string;
+    endDate: string;
+    amount: number;
+  }>;
   gym?: {
     id: string;
     name: string;
@@ -64,6 +70,15 @@ export default function NewCheckInPage() {
     }
   };
 
+  const canCheckIn = (member: Member) => {
+    if (member.status !== 'ACTIVE') return false;
+    
+    // Check if member has a valid membership
+    const currentDate = new Date();
+    const latestMembership = member.memberships?.[0]; // Add optional chaining
+    return latestMembership && new Date(latestMembership.endDate) > currentDate;
+  };
+
   const handleCheckIn = async (memberId: string) => {
     try {
       setLoading(true);
@@ -101,6 +116,18 @@ export default function NewCheckInPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getMembershipStatus = (member: Member) => {
+    const currentDate = new Date();
+    const latestMembership = member.memberships?.[0];
+    
+    if (!latestMembership) {
+      return 'No Membership';
+    }
+    
+    const endDate = new Date(latestMembership.endDate);
+    return endDate > currentDate ? 'Active' : 'Expired';
   };
 
   return (
@@ -160,19 +187,32 @@ export default function NewCheckInPage() {
                     Gym: {member.gym.name}
                   </p>
                 )}
-                <span
-                  className={`inline-block px-2 py-1 mt-1 text-xs rounded-full ${
-                    member.status === 'ACTIVE'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {member.status}
-                </span>
+                <div className="flex gap-2 mt-1">
+                  <span
+                    className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      member.status === 'ACTIVE'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    Status: {member.status}
+                  </span>
+                  <span
+                    className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      getMembershipStatus(member) === 'Active'
+                        ? 'bg-green-100 text-green-800'
+                        : getMembershipStatus(member) === 'Expired'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    Membership: {getMembershipStatus(member)}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => handleCheckIn(member.id)}
-                disabled={loading || member.status !== 'ACTIVE'}
+                disabled={loading || !canCheckIn(member)}
                 className="ml-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {loading ? (

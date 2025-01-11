@@ -38,6 +38,8 @@ export default function NewMembershipPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [duration, setDuration] = useState<string>('1');
   const [amount, setAmount] = useState<string>('');
@@ -51,6 +53,7 @@ export default function NewMembershipPage() {
       fetchMember(memberId).then((member) => {
         if (member) {
           setSelectedMember(member);
+          setSearchQuery(`${member.firstName || ''} ${member.lastName || ''}`.trim());
         }
       });
     }
@@ -61,8 +64,8 @@ export default function NewMembershipPage() {
     try {
       const res = await fetch(`/api/members/${memberId}`);
       if (!res.ok) throw new Error('Failed to fetch member');
-      const member = await res.json();
-      return member;
+      const data = await res.json();
+      return data.member;
     } catch (error) {
       console.error('Fetch member error:', error);
       toast.error('Failed to fetch member details');
@@ -70,6 +73,31 @@ export default function NewMembershipPage() {
     } finally {
       setInitialLoading(false);
     }
+  };
+
+  // Search members
+  const searchMembers = async (query: string) => {
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/members/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Failed to search members');
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to search members');
+    }
+  };
+
+  // Handle member selection
+  const handleMemberSelect = (member: Member) => {
+    setSelectedMember(member);
+    setSearchQuery(`${member.firstName} ${member.lastName}`);
+    setSearchResults([]);
   };
 
   // Create membership
@@ -180,9 +208,48 @@ export default function NewMembershipPage() {
                     </p>
                   )}
                 </div>
-              ) : (
-                <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <p className="text-sm text-yellow-800">Loading member details...</p>
+              ) : !searchParams.get('memberId') && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Member
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        searchMembers(e.target.value);
+                      }}
+                      placeholder="Search by name or email"
+                      className="w-full"
+                    />
+                    {searchResults.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border">
+                        <ul className="py-1">
+                          {searchResults.map((member) => (
+                            <li
+                              key={member.id}
+                              onClick={() => handleMemberSelect(member)}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <span>{member.firstName} {member.lastName}</span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                  </span>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {member.email}
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

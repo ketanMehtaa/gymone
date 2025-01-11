@@ -22,6 +22,8 @@ export async function GET(req: Request) {
       return new NextResponse('Missing search query', { status: 400 });
     }
 
+    const currentDate = new Date();
+
     const members = await prisma.member.findMany({
       where: {
         gymId: payload.gymId,
@@ -31,15 +33,24 @@ export async function GET(req: Request) {
           { email: { contains: query, mode: 'insensitive' } },
         ],
       },
+      include: {
+        memberships: {
+          orderBy: {
+            endDate: 'desc',
+          },
+          take: 1,
+        },
+      },
     });
 
-    // Process members to include only necessary fields
+    // Process all members and include their membership status
     const processedMembers = members.map(member => ({
       id: member.id,
       firstName: member.firstName,
       lastName: member.lastName,
       email: member.email,
       status: member.status,
+      memberships: member.memberships,
     }));
 
     return NextResponse.json(processedMembers);
