@@ -8,7 +8,15 @@ interface Membership {
   startDate: string;
   endDate: string;
   amount: number;
-  status: string;
+  createdAt: string;
+  adminId: string | null;
+  staffId: string | null;
+  createdBy: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: 'ADMIN' | 'STAFF';
+  } | null;
 }
 
 interface Attendance {
@@ -233,7 +241,9 @@ export default function MemberDetailsPage({ params }: { params: { id: string } }
                 {member.memberships.length === 0 ? (
                   <p className="text-sm text-gray-500">No membership records found.</p>
                 ) : (
-                  member.memberships.map((membership) => (
+                  [...member.memberships]
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((membership) => (
                     <div key={membership.id} className="border rounded-lg p-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -253,8 +263,18 @@ export default function MemberDetailsPage({ params }: { params: { id: string } }
                           <p className="mt-1 text-sm text-gray-900">${membership.amount}</p>
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                          <p className="mt-1 text-sm text-gray-900">{membership.status}</p>
+                          <h3 className="text-sm font-medium text-gray-500">Created By</h3>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {membership.createdBy 
+                              ? `${membership.createdBy.firstName} ${membership.createdBy.lastName} (${membership.createdBy.role})`
+                              : 'Unknown'}
+                          </p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">Created At</h3>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {new Date(membership.createdAt).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </div>

@@ -1,12 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { debug } from '@/lib/debug';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
     debug('Fetching all members');
 
+    const token = cookies().get('token')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload?.gymId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const members = await prisma.member.findMany({
+      where: {
+        gymId: payload.gymId,
+      },
       select: {
         id: true,
         firstName: true,

@@ -18,8 +18,8 @@ const navigation = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
   { name: 'Members', href: '/dashboard/members', icon: UserGroupIcon },
   { name: 'Memberships', href: '/dashboard/memberships', icon: UserGroupIcon },
-  { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
-  { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
+//   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
+//   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 
 export default function DashboardLayout({

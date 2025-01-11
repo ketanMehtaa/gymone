@@ -3,6 +3,10 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 
+interface TokenPayload {
+  gymId: string;
+}
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
@@ -14,7 +18,7 @@ export async function GET() {
       );
     }
 
-    const payload = await verifyToken(token);
+    const payload = (await verifyToken(token)) as unknown as TokenPayload;
     
     if (!payload?.gymId) {
       return NextResponse.json(

@@ -1,14 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const token = cookies().get('token')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload?.gymId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const currentDate = new Date();
 
     // Get all active members with their latest membership
     const members = await prisma.member.findMany({
       where: {
         status: 'ACTIVE',
+        gymId: payload.gymId, // Only get members from the user's gym
       },
       select: {
         id: true,
@@ -27,7 +46,6 @@ export async function GET() {
             startDate: true,
             endDate: true,
             amount: true,
-            status: true,
           },
         },
       },

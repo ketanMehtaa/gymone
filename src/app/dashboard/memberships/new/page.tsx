@@ -132,6 +132,8 @@ export default function NewMembershipPage() {
           duration: parseInt(duration),
           amount: parseFloat(amount),
           startDate: startDate.toISOString(),
+          // The API will determine if it's an admin or staff based on the token
+          // No need to explicitly specify the type here
         }),
       });
 

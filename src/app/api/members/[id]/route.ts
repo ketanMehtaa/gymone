@@ -26,7 +26,23 @@ export async function GET(
       include: {
         memberships: {
           orderBy: {
-            endDate: 'desc',
+            createdAt: 'desc',
+          },
+          include: {
+            createdByAdmin: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            createdByStaff: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
         attendances: {
@@ -51,9 +67,32 @@ export async function GET(
         : 'EXPIRED';
     }
 
+    // Format memberships to include creator information
+    const formattedMemberships = member.memberships.map(membership => ({
+      ...membership,
+      createdBy: membership.createdByAdmin
+        ? {
+            id: membership.createdByAdmin.id,
+            firstName: membership.createdByAdmin.firstName,
+            lastName: membership.createdByAdmin.lastName,
+            role: 'ADMIN' as const
+          }
+        : membership.createdByStaff
+        ? {
+            id: membership.createdByStaff.id,
+            firstName: membership.createdByStaff.firstName,
+            lastName: membership.createdByStaff.lastName,
+            role: 'STAFF' as const
+          }
+        : null,
+      createdByAdmin: undefined,
+      createdByStaff: undefined,
+    }));
+
     return NextResponse.json({
       member: {
         ...member,
+        memberships: formattedMemberships,
         membershipStatus,
         latestMembership: latestMembership || null,
       }

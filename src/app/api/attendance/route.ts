@@ -1,8 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const token = cookies().get('token')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload?.gymId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { memberId } = body;
 
@@ -13,26 +31,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if member exists and is active
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
+    // Check if member exists, is active, and belongs to the same gym
+    const member = await prisma.member.findFirst({
+      where: { 
+        id: memberId,
+        gymId: payload.gymId, // Ensure member belongs to the same gym
+      },
       select: {
         id: true,
         firstName: true,
         lastName: true,
         status: true,
-        gym: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        gymId: true,
       },
     });
 
     if (!member) {
       return NextResponse.json(
-        { error: 'Member not found' },
+        { error: 'Member not found or does not belong to your gym' },
         { status: 404 }
       );
     }
@@ -71,7 +87,7 @@ export async function POST(request: Request) {
     const attendance = await prisma.attendance.create({
       data: {
         memberId,
-        gymId: member.gym.id,
+        gymId: member.gymId,
         checkIn: new Date(),
       },
       include: {

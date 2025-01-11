@@ -13,6 +13,12 @@ const createMembershipSchema = z.object({
   startDate: z.string().transform((str) => new Date(str)),
 });
 
+interface TokenPayload {
+  id: string;
+  gymId: string | undefined;
+  role: 'ADMIN' | 'STAFF';
+}
+
 export async function POST(req: Request) {
   try {
     const token = cookies().get('token')?.value;
@@ -20,7 +26,7 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const payload = await verifyToken(token);
+    const payload = (await verifyToken(token)) as unknown as TokenPayload;
     if (!payload?.gymId) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -52,13 +58,57 @@ export async function POST(req: Request) {
         startDate: body.startDate,
         endDate,
         amount: body.amount,
-        status: 'ACTIVE',
         memberId: body.memberId,
-        gymId: payload.gymId as string,
+        gymId: payload.gymId,
+        // Add creator information based on role using the correct id field
+        ...(payload.role === 'ADMIN' 
+          ? { adminId: payload.id }
+          : { staffId: payload.id }
+        ),
       },
     });
 
-    return NextResponse.json(membership);
+    // Fetch creator details after creation
+    let creator = null;
+    if (membership.adminId) {
+      const admin = await prisma.admin.findUnique({
+        where: { id: membership.adminId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+      if (admin) {
+        creator = {
+          ...admin,
+          role: 'ADMIN' as const
+        };
+      }
+    } else if (membership.staffId) {
+      const staff = await prisma.staff.findUnique({
+        where: { id: membership.staffId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+      if (staff) {
+        creator = {
+          ...staff,
+          role: 'STAFF' as const
+        };
+      }
+    }
+
+    // Return formatted response
+    return NextResponse.json({
+      data: {
+        ...membership,
+        createdBy: creator
+      }
+    });
   } catch (error) {
     console.error('Membership creation error:', error);
     if (error instanceof z.ZodError) {

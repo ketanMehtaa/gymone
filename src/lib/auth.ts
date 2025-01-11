@@ -14,26 +14,26 @@ interface LoginResponse {
 
 export async function signToken(payload: any) {
   try {
-    debug('Creating JWT token', { data: { userId: payload.id, role: payload.role }});
+    // debug('Creating JWT token', { data: { userId: payload.id, role: payload.role }});
     return await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('24h')
       .sign(secret);
   } catch (error) {
-    debug('Error signing JWT token', { level: 'error', data: error });
+    // debug('Error signing JWT token', { level: 'error', data: error });
     throw error;
   }
 }
 
 export async function verifyToken(token: string) {
   try {
-    debug('Verifying JWT token');
+    // debug('Verifying JWT token');
     const { payload } = await jwtVerify(token, secret);
-    debug('Token verified successfully', { data: { userId: payload.id, role: payload.role }});
+    // debug('Token verified successfully', { data: { userId: payload.id, role: payload.role }});
     return payload;
   } catch (error) {
-    debug('Token verification failed', { level: 'error', data: error });
+    // debug('Token verification failed', { level: 'error', data: error });
     return null;
   }
 }
@@ -59,9 +59,9 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     });
 
     if (admin) {
-      debug('Admin found, verifying password');
+      // debug('Admin found, verifying password');
       if (admin.password === password) {
-        debug('Admin password verified');
+        // debug('Admin password verified');
         return {
           id: admin.id,
           email: admin.email,
@@ -70,7 +70,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
           gymId: admin.gym?.id
         };
       }
-      debug('Admin password invalid');
+      // debug('Admin password invalid');
     }
 
     debug('Attempting to find staff', { data: { email }});
@@ -89,9 +89,9 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     });
 
     if (staff && staff.isActive) {
-      debug('Active staff found, verifying password');
+      // debug('Active staff found, verifying password');
       if (staff.password === password) {
-        debug('Staff password verified');
+        // debug('Staff password verified');
         return {
           id: staff.id,
           email: staff.email,
@@ -100,15 +100,15 @@ export async function loginUser(email: string, password: string): Promise<LoginR
           gymId: staff.gymId
         };
       }
-      debug('Staff password invalid');
+      // debug('Staff password invalid');
     } else if (staff) {
-      debug('Inactive staff account attempted login', { level: 'warn', data: { email }});
+      // debug('Inactive staff account attempted login', { level: 'warn', data: { email }});
     }
 
-    debug('No valid user found', { level: 'warn', data: { email }});
+    // debug('No valid user found', { level: 'warn', data: { email }});
     return null;
   } catch (error) {
-    debug('Error during login', { level: 'error', data: error });
+    // debug('Error during login', { level: 'error', data: error });
     throw error;
   }
 } 
