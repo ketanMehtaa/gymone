@@ -9,7 +9,7 @@ interface Member {
   firstName: string;
   lastName: string;
   email: string;
-  membershipStatus: string;
+  status: string;
   gym?: {
     id: string;
     name: string;
@@ -162,17 +162,17 @@ export default function NewCheckInPage() {
                 )}
                 <span
                   className={`inline-block px-2 py-1 mt-1 text-xs rounded-full ${
-                    member.membershipStatus === 'ACTIVE'
+                    member.status === 'ACTIVE'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {member.membershipStatus}
+                  {member.status}
                 </span>
               </div>
               <button
                 onClick={() => handleCheckIn(member.id)}
-                disabled={loading || member.membershipStatus !== 'ACTIVE'}
+                disabled={loading || member.status !== 'ACTIVE'}
                 className="ml-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {loading ? (

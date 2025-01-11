@@ -31,38 +31,16 @@ export async function GET(req: Request) {
           { email: { contains: query, mode: 'insensitive' } },
         ],
       },
-      include: {
-        memberships: {
-          orderBy: {
-            endDate: 'desc',
-          },
-          take: 1,
-        },
-      },
     });
 
-    // Process members to include membership status
-    const processedMembers = members.map(member => {
-      const latestMembership = member.memberships[0];
-      let membershipStatus: 'ACTIVE' | 'EXPIRED' | 'NONE' = 'NONE';
-      
-      if (latestMembership) {
-        const now = new Date();
-        const endDate = new Date(latestMembership.endDate);
-        membershipStatus = endDate > now ? 'ACTIVE' : 'EXPIRED';
-      }
-
-      return {
-        id: member.id,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        membershipStatus,
-        latestMembership: latestMembership ? {
-          endDate: latestMembership.endDate.toISOString(),
-        } : undefined,
-      };
-    });
+    // Process members to include only necessary fields
+    const processedMembers = members.map(member => ({
+      id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      status: member.status,
+    }));
 
     return NextResponse.json(processedMembers);
   } catch (error) {

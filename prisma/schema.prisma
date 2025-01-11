@@ -90,7 +90,6 @@ model Membership {
   startDate     DateTime
   endDate       DateTime
   amount        Float
-  status        MembershipStatus  @default(ACTIVE)
   member        Member      @relation(fields: [memberId], references: [id])
   memberId      String
   gym           Gym         @relation(fields: [gymId], references: [id])
@@ -135,9 +134,3 @@ enum MemberStatus {
   INACTIVE
   SUSPENDED
 }
-
-enum MembershipStatus {
-  ACTIVE
-  EXPIRED
-  CANCELLED
-} 

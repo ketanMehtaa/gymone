@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { firstName, lastName, email, phone } = body;
+    const { firstName, lastName, email, phone, status } = body;
 
     const member = await prisma.member.update({
       where: {
@@ -92,6 +92,7 @@ export async function PUT(
         lastName,
         email,
         phone,
+        status,
       },
       include: {
         memberships: {
