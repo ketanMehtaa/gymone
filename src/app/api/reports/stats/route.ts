@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-import { debug } from '@/lib/debug';
 
 export async function GET() {
   try {
@@ -22,71 +21,39 @@ export async function GET() {
       );
     }
 
-    // Get the start of the last 6 months
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-    sixMonthsAgo.setHours(0, 0, 0, 0);
+    // Get the start of this year
+    const startOfYear = new Date();
+    startOfYear.setMonth(0, 1);
+    startOfYear.setHours(0, 0, 0, 0);
 
-    // Get the start of the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
-
-    // Get today's start and end
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
+    // Get all stats in parallel
     const [
-      membershipsByStatus,
-      revenueByMonth,
-      checkInsByDay,
-      membershipStatus,
-      paymentMethods,
-      hourlyAttendance,
-      membershipTrend
+      membershipTrend,
+      attendanceTrend,
+      memberStatusDistribution,
     ] = await Promise.all([
-      // Memberships by status
+      // Monthly membership trend
       prisma.membership.groupBy({
-        by: ['status'],
+        by: ['createdAt'],
         where: {
           gymId: payload.gymId,
-          endDate: {
-            gte: new Date(),
+          createdAt: {
+            gte: startOfYear,
           },
         },
         _count: true,
       }),
 
-      // Revenue by month for the last 6 months
-      prisma.payment.groupBy({
-        by: ['paymentDate'],
-        where: {
-          gymId: payload.gymId,
-          status: 'COMPLETED',
-          paymentDate: {
-            gte: sixMonthsAgo,
-          },
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-
-      // Check-ins by day for the last 7 days
+      // Monthly attendance trend
       prisma.attendance.groupBy({
         by: ['checkIn'],
         where: {
           gymId: payload.gymId,
           checkIn: {
-            gte: sevenDaysAgo,
+            gte: startOfYear,
           },
         },
-        _count: {
-          _all: true,
-        },
+        _count: true,
       }),
 
       // Member status distribution
@@ -95,114 +62,34 @@ export async function GET() {
         where: {
           gymId: payload.gymId,
         },
-        _count: {
-          _all: true,
-        },
-      }),
-
-      // Payment methods distribution
-      prisma.payment.groupBy({
-        by: ['method'],
-        where: {
-          gymId: payload.gymId,
-          status: 'COMPLETED',
-          paymentDate: {
-            gte: sixMonthsAgo,
-          },
-        },
-        _count: true,
-        _sum: {
-          amount: true,
-        },
-      }),
-
-      // Hourly attendance distribution for today
-      prisma.attendance.findMany({
-        where: {
-          gymId: payload.gymId,
-          checkIn: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-        select: {
-          checkIn: true,
-        },
-      }),
-
-      // Membership trend (new vs cancelled) for last 6 months
-      prisma.membership.groupBy({
-        by: ['startDate', 'status'],
-        where: {
-          gymId: payload.gymId,
-          startDate: {
-            gte: sixMonthsAgo,
-          },
-        },
         _count: true,
       }),
     ]);
 
-    // Process hourly attendance
-    const hourlyDistribution = Array(24).fill(0);
-    hourlyAttendance.forEach(attendance => {
-      const hour = new Date(attendance.checkIn).getHours();
-      hourlyDistribution[hour]++;
-    });
+    const months = [
+      'January', 'February', 'March', 'April',
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December'
+    ];
 
-    // Format the data
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const formattedData = {
-      membershipsByType: membershipsByStatus.map(item => ({
-        type: item.status,
-        count: item._count,
+    return NextResponse.json({
+      membershipTrend: membershipTrend.map(item => ({
+        month: months[new Date(item.createdAt).getMonth()],
+        total: item._count,
       })),
-
-      revenueByMonth: revenueByMonth.map(item => ({
-        month: months[new Date(item.paymentDate).getMonth()],
-        amount: item._sum.amount || 0,
+      attendanceTrend: attendanceTrend.map(item => ({
+        month: months[new Date(item.checkIn).getMonth()],
+        total: item._count,
       })),
-
-      checkInsByDay: checkInsByDay.map(item => ({
-        date: new Date(item.checkIn).toLocaleDateString('en-US', { weekday: 'short' }),
-        count: item._count._all,
-      })),
-
-      membershipStatus: membershipStatus.map(item => ({
+      memberStatusDistribution: memberStatusDistribution.map(item => ({
         status: item.status,
-        count: item._count._all,
+        total: item._count,
       })),
-
-      paymentMethods: paymentMethods.map(item => ({
-        method: item.method,
-        count: item._count,
-        amount: item._sum.amount || 0,
-      })),
-
-      hourlyAttendance: hourlyDistribution.map((count, hour) => ({
-        hour: hour.toString().padStart(2, '0') + ':00',
-        count,
-      })),
-
-      membershipTrend: membershipTrend.reduce((acc, item) => {
-        const month = months[new Date(item.startDate).getMonth()];
-        if (!acc[month]) {
-          acc[month] = { new: 0, cancelled: 0 };
-        }
-        if (item.status === 'ACTIVE') {
-          acc[month].new += item._count;
-        } else if (item.status === 'INACTIVE') {
-          acc[month].cancelled += item._count;
-        }
-        return acc;
-      }, {} as Record<string, { new: number; cancelled: number }>),
-    };
-
-    return NextResponse.json(formattedData);
+    });
   } catch (error) {
-    console.error('Error fetching report stats:', error);
+    console.error('Error fetching reports stats:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch report stats' },
+      { error: 'Failed to fetch reports stats' },
       { status: 500 }
     );
   }

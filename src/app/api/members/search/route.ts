@@ -1,65 +1,72 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    console.log('Received search query:', query);
-
-    if (!query) {
-      console.log('No search query provided');
-      return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
+    const token = cookies().get('token')?.value;
+    if (!token) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    console.log('Searching for members with query:', query);
+    const payload = await verifyToken(token);
+    if (!payload?.gymId) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get('q');
+
+    if (!query) {
+      return new NextResponse('Missing search query', { status: 400 });
+    }
+
     const members = await prisma.member.findMany({
       where: {
+        gymId: payload.gymId,
         OR: [
           { firstName: { contains: query, mode: 'insensitive' } },
           { lastName: { contains: query, mode: 'insensitive' } },
           { email: { contains: query, mode: 'insensitive' } },
         ],
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        status: true,
+      include: {
         memberships: {
-          where: {
-            AND: [
-              { status: 'ACTIVE' },
-              { endDate: { gte: new Date() } }
-            ]
-          },
-          select: {
-            id: true,
-            startDate: true,
-            endDate: true,
-            amount: true,
-            status: true,
-          },
           orderBy: {
-            endDate: 'desc'
-          }
+            endDate: 'desc',
+          },
+          take: 1,
         },
       },
-      orderBy: {
-        firstName: 'asc'
-      },
-      take: 10,
     });
 
-    console.log('Search results:', JSON.stringify(members, null, 2));
+    // Process members to include membership status
+    const processedMembers = members.map(member => {
+      const latestMembership = member.memberships[0];
+      let membershipStatus: 'ACTIVE' | 'EXPIRED' | 'NONE' = 'NONE';
+      
+      if (latestMembership) {
+        const now = new Date();
+        const endDate = new Date(latestMembership.endDate);
+        membershipStatus = endDate > now ? 'ACTIVE' : 'EXPIRED';
+      }
 
-    return NextResponse.json(members);
+      return {
+        id: member.id,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        membershipStatus,
+        latestMembership: latestMembership ? {
+          endDate: latestMembership.endDate.toISOString(),
+        } : undefined,
+      };
+    });
+
+    return NextResponse.json(processedMembers);
   } catch (error) {
-    console.error('Search error:', error);
-    return NextResponse.json(
-      { error: 'Failed to search members' },
-      { status: 500 }
-    );
+    console.error('Member search error:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

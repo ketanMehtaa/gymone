@@ -51,12 +51,12 @@ export async function GET() {
         },
       }),
 
-      // Total revenue this month
-      prisma.payment.aggregate({
+      // Total revenue this month from active memberships
+      prisma.membership.aggregate({
         where: {
           gymId: payload.gymId,
-          status: 'COMPLETED',
-          paymentDate: {
+          status: 'ACTIVE',
+          createdAt: {
             gte: startOfMonth,
           },
         },

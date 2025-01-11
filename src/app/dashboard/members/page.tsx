@@ -191,6 +191,12 @@ export default function MembersPage() {
                         >
                           Edit
                         </Link>
+                        <Link
+                          href={`/dashboard/memberships/new?memberId=${member.id}`}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Add Membership
+                        </Link>
                       </div>
                     </td>
                   </tr>

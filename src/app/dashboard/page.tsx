@@ -7,6 +7,8 @@ import {
   CalendarIcon,
   CreditCardIcon,
   ChartBarIcon,
+  UserPlusIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import TodayCheckIns from './components/TodayCheckIns';
 
@@ -42,30 +44,24 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
-  const quickActions = [
+  const actions = [
     {
       name: 'New Member',
-      description: 'Add a new member to the gym',
+      description: 'Add a new member',
       href: '/dashboard/members/new',
-      icon: UserGroupIcon,
+      icon: UserPlusIcon,
     },
     {
-      name: 'Check In',
-      description: 'Record member attendance',
-      href: '/dashboard/attendance/new',
-      icon: CalendarIcon,
-    },
-    {
-      name: 'New Payment',
-      description: 'Record a payment',
-      href: '/dashboard/payments/new',
+      name: 'New Membership',
+      description: 'Create a membership',
+      href: '/dashboard/memberships/new',
       icon: CreditCardIcon,
     },
     {
-      name: 'Reports',
-      description: 'View analytics and reports',
-      href: '/dashboard/reports',
-      icon: ChartBarIcon,
+      name: 'Check In',
+      description: 'Record attendance',
+      href: '/dashboard/attendance/new',
+      icon: ClockIcon,
     },
   ];
 
@@ -161,7 +157,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {quickActions.map((action) => (
+            {actions.map((action) => (
               <Link
                 key={action.name}
                 href={action.href}
