@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface FormData {
   firstName: string;
@@ -84,6 +85,29 @@ export default function NewMemberPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+
+    // Validate required fields
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.gymId) {
+      setError('All fields are required');
+      setSubmitting(false);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setSubmitting(false);
+      return;
+    }
+
+    // Validate phone number (10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError('Please enter a valid 10-digit phone number');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/members', {
@@ -166,14 +190,15 @@ export default function NewMemberPage() {
                 >
                   First Name
                 </label>
-                <input
+                <Input
                   type="text"
                   id="firstName"
                   name="firstName"
-                  required
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full"
+                  required
+                  minLength={2}
                 />
               </div>
 
@@ -184,14 +209,15 @@ export default function NewMemberPage() {
                 >
                   Last Name
                 </label>
-                <input
+                <Input
                   type="text"
                   id="lastName"
                   name="lastName"
-                  required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full"
+                  required
+                  minLength={2}
                 />
               </div>
 
@@ -202,14 +228,14 @@ export default function NewMemberPage() {
                 >
                   Email
                 </label>
-                <input
+                <Input
                   type="email"
                   id="email"
                   name="email"
-                  required
                   value={formData.email}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full"
+                  required
                 />
               </div>
 
@@ -220,14 +246,16 @@ export default function NewMemberPage() {
                 >
                   Phone
                 </label>
-                <input
+                <Input
                   type="tel"
                   id="phone"
                   name="phone"
-                  required
                   value={formData.phone}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full"
+                  required
+                  pattern="[0-9]{10}"
+                  title="Please enter a valid 10-digit phone number"
                 />
               </div>
 
@@ -282,13 +310,12 @@ export default function NewMemberPage() {
             </div>
 
             <div className="flex justify-end">
-              <button
+              <Button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
                 {submitting ? 'Creating...' : 'Create Member'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

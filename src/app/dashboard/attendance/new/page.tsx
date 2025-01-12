@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Member {
   id: string;
@@ -143,15 +145,15 @@ export default function NewCheckInPage() {
             <Search className="h-5 w-5 text-gray-400" />
           )}
         </div>
-        <input
+        <Input
           type="text"
+          placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             searchMembers(e.target.value);
           }}
-          placeholder="Search members by name or email..."
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="w-full"
         />
       </div>
 
@@ -210,20 +212,21 @@ export default function NewCheckInPage() {
                   </span>
                 </div>
               </div>
-              <button
+              <Button
+                type="button"
                 onClick={() => handleCheckIn(member.id)}
                 disabled={loading || !canCheckIn(member)}
-                className="ml-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="ml-4 flex items-center"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Checking in...
+                    <span className="animate-spin mr-2">⌛</span>
+                    Checking In...
                   </>
                 ) : (
                   'Check In'
                 )}
-              </button>
+              </Button>
             </div>
           ))}
           {members.length === 0 && searchQuery && !searchLoading && (

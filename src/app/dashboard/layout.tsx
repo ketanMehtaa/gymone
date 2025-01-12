@@ -108,7 +108,7 @@ export default function DashboardLayout({
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
             <Link href="/dashboard" className="flex items-center">
-              <span className="text-xl font-bold text-indigo-600">GymOne</span>
+              <span className="text-xl font-bold text-primary">GymOne</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -141,8 +141,8 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                   onClick={() => {
                     if (window.innerWidth < 1024) {
@@ -152,7 +152,7 @@ export default function DashboardLayout({
                 >
                   <item.icon
                     className={`mr-3 flex-shrink-0 h-6 w-6 ${
-                      isActive ? 'text-indigo-600' : 'text-gray-400'
+                      isActive ? 'text-primary' : 'text-muted-foreground'
                     }`}
                     aria-hidden="true"
                   />
@@ -163,13 +163,13 @@ export default function DashboardLayout({
           </nav>
 
           {/* Logout button */}
-          <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-t border-border">
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+              className="flex items-center w-full px-2 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-accent hover:text-accent-foreground"
             >
               <svg
-                className="w-6 h-6 mr-3 text-gray-400"
+                className="w-6 h-6 mr-3 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -192,7 +192,7 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 text-gray-500 rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            className="p-2 text-muted-foreground rounded-md hover:text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
           >
             <span className="sr-only">Open sidebar</span>
             <svg
@@ -210,7 +210,7 @@ export default function DashboardLayout({
             </svg>
           </button>
           <Link href="/dashboard" className="lg:hidden">
-            <span className="text-xl font-bold text-indigo-600">GymOne</span>
+            <span className="text-xl font-bold text-primary">GymOne</span>
           </Link>
         </div>
       </div>

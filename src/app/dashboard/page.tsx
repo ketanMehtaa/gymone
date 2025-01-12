@@ -165,7 +165,7 @@ export default function DashboardPage() {
                 className="relative group bg-white p-4 sm:p-6 shadow rounded-lg hover:shadow-md transition-shadow duration-200"
               >
                 <div>
-                  <span className="rounded-lg inline-flex p-2 sm:p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
+                  <span className="rounded-lg inline-flex p-2 sm:p-3 bg-primary/10 text-primary ring-4 ring-background">
                     <action.icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                   </span>
                 </div>
@@ -177,10 +177,7 @@ export default function DashboardPage() {
                     {action.description}
                   </p>
                 </div>
-                <span
-                  className="absolute inset-0 rounded-lg ring-indigo-200 pointer-events-none transition-shadow duration-200 group-hover:ring-2"
-                  aria-hidden="true"
-                />
+                <div className="absolute inset-0 rounded-lg ring-primary/20 pointer-events-none transition-shadow duration-200 group-hover:ring-2" />
               </Link>
             ))}
           </div>

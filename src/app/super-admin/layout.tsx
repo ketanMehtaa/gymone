@@ -39,7 +39,7 @@ export default function SuperAdminLayout({
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white pt-5 pb-4 overflow-y-auto">
           <div className="flex items-center flex-shrink-0 px-4">
-            <Link href="/super-admin/gyms" className="text-xl font-bold text-indigo-600">
+            <Link href="/super-admin/gyms" className="text-xl font-bold text-primary">
               GymOne Admin
             </Link>
           </div>
@@ -51,9 +51,9 @@ export default function SuperAdminLayout({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="group flex items-center px-2 py-2 text-sm leading-6 font-medium rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    className="group flex items-center px-2 py-2 text-sm leading-6 font-medium rounded-md text-muted-foreground hover:text-accent-foreground hover:bg-accent"
                   >
-                    <Icon className="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-500" />
+                    <Icon className="mr-4 h-6 w-6 text-muted-foreground group-hover:text-accent-foreground" />
                     {item.name}
                   </Link>
                 );
@@ -62,12 +62,12 @@ export default function SuperAdminLayout({
           </nav>
 
           {/* Logout button */}
-          <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-t border-border">
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+              className="flex items-center w-full px-2 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-accent hover:text-accent-foreground"
             >
-              <LogOut className="w-6 h-6 mr-3 text-gray-400" />
+              <LogOut className="w-6 h-6 mr-3 text-muted-foreground" />
               Logout
             </button>
           </div>
@@ -79,7 +79,7 @@ export default function SuperAdminLayout({
         <div className="sticky top-0 z-10 lg:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-gray-100">
           <button
             type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
             onClick={() => setSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
@@ -132,7 +132,7 @@ export default function SuperAdminLayout({
 
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
                 <div className="flex-shrink-0 flex items-center px-4">
-                  <span className="text-xl font-bold text-indigo-600">GymOne Admin</span>
+                  <span className="text-xl font-bold text-primary">GymOne Admin</span>
                 </div>
                 <nav className="mt-5 px-2 space-y-1">
                   {navigation.map((item) => {

@@ -173,7 +173,7 @@ export default function NewMembershipPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">Create New Membership</h1>
+        <h1 className="md:text-3xl font-bold text-gray-900  sm:text-2xl">Create New Membership</h1>
       </div>
 
       <Card>

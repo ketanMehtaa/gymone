@@ -3,6 +3,23 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 
+// This is how membershipStatus is typically calculated on the server
+
+const calculateMembershipStatus = (latestMembership: any | null): 'NONE' | 'EXPIRED' | 'ACTIVE' => {
+  if (!latestMembership) {
+    return 'NONE';
+  }
+
+  const endDate = new Date(latestMembership.endDate);
+  const now = new Date();
+
+  if (endDate < now) {
+    return 'EXPIRED';
+  }
+
+  return 'ACTIVE';
+};
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
@@ -51,25 +68,16 @@ export async function GET() {
       },
     });
 
-    // Process members to add membership status
-    const processedMembers = members.map(member => {
-      const latestMembership = member.memberships[0];
-      let membershipStatus: 'NONE' | 'EXPIRED' | 'ACTIVE' = 'NONE';
-
-      if (latestMembership) {
-        membershipStatus = new Date(latestMembership.endDate) < currentDate ? 'EXPIRED' : 'ACTIVE';
-      }
-
-      return {
-        ...member,
-        latestMembership: member.memberships[0] || undefined,
-        membershipStatus,
-        memberships: undefined, // Remove the memberships array
-      };
-    });
+    // Transform the data to include membership status
+    const membersWithStatus = members.map(member => ({
+      ...member,
+      latestMembership: member.memberships[0] || null,
+      membershipStatus: calculateMembershipStatus(member.memberships[0]),
+      memberships: undefined  // Remove the memberships array
+    }));
 
     // Sort members: EXPIRED first, then NONE, then ACTIVE
-    const sortedMembers = processedMembers.sort((a, b) => {
+    const sortedMembers = membersWithStatus.sort((a, b) => {
       const statusOrder = { 'EXPIRED': 0, 'NONE': 1, 'ACTIVE': 2 };
       return statusOrder[a.membershipStatus] - statusOrder[b.membershipStatus];
     });

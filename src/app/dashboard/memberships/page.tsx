@@ -6,6 +6,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
+import Link from 'next/link';
 
 interface Member {
   id: string;
@@ -19,7 +20,6 @@ interface Member {
     startDate: string;
     endDate: string;
     amount: number;
-    status: string;
   };
   membershipStatus: 'NONE' | 'EXPIRED' | 'ACTIVE';
 }
