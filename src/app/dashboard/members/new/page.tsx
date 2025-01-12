@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 interface FormData {
   firstName: string;
@@ -100,6 +108,14 @@ export default function NewMemberPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStatusSelect = (value: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') => {
+    setFormData(prev => ({ ...prev, status: value }));
+  };
+
+  const handleGymSelect = (gymId: string) => {
+    setFormData(prev => ({ ...prev, gymId }));
   };
 
   if (loading) {
@@ -216,47 +232,52 @@ export default function NewMemberPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Status
                 </label>
-                <select
-                  id="status"
-                  name="status"
-                  required
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="SUSPENDED">Suspended</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {formData.status}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    <DropdownMenuItem onClick={() => handleStatusSelect('ACTIVE')}>
+                      Active
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleStatusSelect('INACTIVE')}>
+                      Inactive
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleStatusSelect('SUSPENDED')}>
+                      Suspended
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div>
-                <label
-                  htmlFor="gymId"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Gym
                 </label>
-                <select
-                  id="gymId"
-                  name="gymId"
-                  required
-                  value={formData.gymId}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  {gyms.map((gym) => (
-                    <option key={gym.id} value={gym.id}>
-                      {gym.name}
-                    </option>
-                  ))}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {gyms.find(gym => gym.id === formData.gymId)?.name || 'Select Gym'}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    {gyms.map((gym) => (
+                      <DropdownMenuItem
+                        key={gym.id}
+                        onClick={() => handleGymSelect(gym.id)}
+                      >
+                        {gym.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

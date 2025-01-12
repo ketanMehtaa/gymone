@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 interface FormData {
   firstName: string;
@@ -38,34 +46,33 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
       setError('');
       
       try {
-        const [memberRes, gymsRes] = await Promise.all([
-          fetch(`/api/members/${params.id}`),
-          fetch('/api/gyms')
+        // Fetch gyms and member data in parallel
+        const [gymsRes, memberRes] = await Promise.all([
+          fetch('/api/gyms'),
+          fetch(`/api/members/${params.id}`)
         ]);
 
-        const [memberData, gymsData] = await Promise.all([
-          memberRes.json(),
-          gymsRes.json()
-        ]);
+        const gymsData = await gymsRes.json();
+        const memberData = await memberRes.json();
 
-        if (!memberRes.ok) {
-          throw new Error(memberData.error || 'Failed to fetch member');
-        }
+        if (!gymsRes.ok) throw new Error('Failed to fetch gyms');
+        if (!memberRes.ok) throw new Error('Failed to fetch member');
 
-        if (!gymsRes.ok) {
-          throw new Error(gymsData.error || 'Failed to fetch gym list');
-        }
-
+        const gymsArray = Array.isArray(gymsData) ? gymsData : [];
+        setGyms(gymsArray);
+        
+        // Check if memberData has a nested member property
+        const member = memberData.member || memberData;
+        
         setFormData({
-          firstName: memberData.member.firstName,
-          lastName: memberData.member.lastName,
-          email: memberData.member.email,
-          phone: memberData.member.phone,
-          status: memberData.member.status,
-          gymId: memberData.member.gymId,
+          firstName: member.firstName || '',
+          lastName: member.lastName || '',
+          email: member.email || '',
+          phone: member.phone || '',
+          status: member.status || 'ACTIVE',
+          gymId: member.gymId || '',
         });
 
-        setGyms(gymsData.data);
       } catch (err) {
         console.error('Error loading data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -85,6 +92,14 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleStatusSelect = (value: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') => {
+    setFormData(prev => ({ ...prev, status: value }));
+  };
+
+  const handleGymSelect = (gymId: string) => {
+    setFormData(prev => ({ ...prev, gymId }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -107,7 +122,7 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
         throw new Error(data.error || 'Failed to update member');
       }
 
-      router.push(`/dashboard/members/${params.id}`);
+      router.push('/dashboard/members');
       router.refresh();
     } catch (err) {
       console.error('Error updating member:', err);
@@ -231,47 +246,52 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
               </div>
 
               <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Status
                 </label>
-                <select
-                  id="status"
-                  name="status"
-                  required
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="SUSPENDED">Suspended</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {formData.status}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    <DropdownMenuItem onClick={() => handleStatusSelect('ACTIVE')}>
+                      Active
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleStatusSelect('INACTIVE')}>
+                      Inactive
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleStatusSelect('SUSPENDED')}>
+                      Suspended
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div>
-                <label
-                  htmlFor="gymId"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Gym
                 </label>
-                <select
-                  id="gymId"
-                  name="gymId"
-                  required
-                  value={formData.gymId}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  {gyms.map((gym) => (
-                    <option key={gym.id} value={gym.id}>
-                      {gym.name}
-                    </option>
-                  ))}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {gyms.find(gym => gym.id === formData.gymId)?.name || 'Select Gym'}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    {gyms.map((gym) => (
+                      <DropdownMenuItem
+                        key={gym.id}
+                        onClick={() => handleGymSelect(gym.id)}
+                      >
+                        {gym.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
