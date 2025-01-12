@@ -11,6 +11,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 import TodayCheckIns from './components/TodayCheckIns';
+import { formatCurrency } from '@/lib/utils';
 
 interface DashboardStats {
   totalMembers: number;
@@ -123,7 +124,7 @@ export default function DashboardPage() {
                     Revenue This Month
                   </dt>
                   <dd className="text-base sm:text-lg font-medium text-gray-900">
-                    ${stats.monthlyRevenue.toLocaleString()}
+                    {formatCurrency(stats.monthlyRevenue)}
                   </dd>
                 </dl>
               </div>

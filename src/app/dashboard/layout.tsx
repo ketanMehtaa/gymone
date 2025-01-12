@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -30,12 +30,36 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const [stats, setStats] = useState({
     totalMembers: 0,
     activeMembers: 0,
     monthlyRevenue: 0,
     checkInsToday: 0,
   });
+
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    if (window.innerWidth < 1024) { // lg breakpoint
+      setSidebarOpen(false);
+    }
+  }, [pathname]);
+
+  // Handle clicks outside of sidebar (mobile)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (window.innerWidth < 1024 && // Only on mobile
+          sidebarRef.current && 
+          !sidebarRef.current.contains(event.target as Node)) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchStats() {
@@ -75,6 +99,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
       <div
+        ref={sidebarRef}
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -119,6 +144,11 @@ export default function DashboardLayout({
                       ? 'bg-indigo-50 text-indigo-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
+                      setSidebarOpen(false);
+                    }
+                  }}
                 >
                   <item.icon
                     className={`mr-3 flex-shrink-0 h-6 w-6 ${
@@ -199,6 +229,14 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 } 

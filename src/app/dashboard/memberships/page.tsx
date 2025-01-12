@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -138,7 +139,7 @@ export default function MembershipsPage() {
                       </div>
                       <div className="mt-1 text-sm text-gray-500">
                         <p>Period: {format(new Date(member.latestMembership.startDate), 'PP')} - {format(new Date(member.latestMembership.endDate), 'PP')}</p>
-                        <p>Amount: ${Number(member.latestMembership.amount).toFixed(2)}</p>
+                        <p>Amount: {formatCurrency(member.latestMembership.amount)}</p>
                       </div>
                     </div>
                   )}
