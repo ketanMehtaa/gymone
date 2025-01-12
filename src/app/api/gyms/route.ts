@@ -13,6 +13,7 @@ interface TokenPayload {
   gymId?: string;
 }
 
+
 const createGymSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
