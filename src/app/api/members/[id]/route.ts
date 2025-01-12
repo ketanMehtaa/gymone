@@ -26,7 +26,7 @@ export async function GET(
       include: {
         memberships: {
           orderBy: {
-            createdAt: 'desc',
+            endDate: 'desc',
           },
           include: {
             createdByAdmin: {

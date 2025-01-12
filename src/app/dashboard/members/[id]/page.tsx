@@ -241,9 +241,7 @@ export default function MemberDetailsPage({ params }: { params: { id: string } }
                 {member.memberships.length === 0 ? (
                   <p className="text-sm text-gray-500">No membership records found.</p>
                 ) : (
-                  [...member.memberships]
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .map((membership) => (
+                  member.memberships.map((membership) => (
                     <div key={membership.id} className="border rounded-lg p-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>

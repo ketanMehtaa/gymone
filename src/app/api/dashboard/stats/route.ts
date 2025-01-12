@@ -43,19 +43,24 @@ export async function GET() {
         },
       }),
 
-      // Active members count
+      // Members with active memberships (end date >= today)
       prisma.member.count({
         where: {
           gymId: payload.gymId,
-          status: 'ACTIVE',
+          memberships: {
+            some: {
+              endDate: {
+                gte: today
+              }
+            }
+          }
         },
       }),
 
-      // Total revenue this month from active memberships
+      // Total revenue from memberships created this month
       prisma.membership.aggregate({
         where: {
           gymId: payload.gymId,
-          status: 'ACTIVE',
           createdAt: {
             gte: startOfMonth,
           },
@@ -79,7 +84,7 @@ export async function GET() {
     return NextResponse.json({
       totalMembers,
       activeMembers,
-      monthlyRevenue: monthlyRevenue._sum.amount || 0,
+      monthlyRevenue: monthlyRevenue._sum?.amount || 0,
       checkInsToday,
     });
   } catch (error) {

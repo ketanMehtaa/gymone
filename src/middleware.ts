@@ -2,49 +2,72 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+const publicPaths = ['/', '/login', '/register'];
 
-  // Paths that don't require authentication
-  const publicPaths = ['/', '/login', '/register'];
-  const isPublicPath = publicPaths.includes(pathname);
-
-  // Get token from cookie
-  const token = request.cookies.get('token')?.value;
-
-  // If path is public and user is logged in, redirect to dashboard
-  if (isPublicPath && token) {
-    try {
-      const payload = await verifyToken(token);
-      if (payload) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    } catch (error) {
-      // Invalid token, let them access public routes
-    }
-  }
-
-  // If path is not public and user is not logged in, redirect to login
-  if (!isPublicPath && !token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+interface TokenPayload {
+  role: 'ADMIN' | 'STAFF' | 'SUPER_ADMIN';
 }
 
-// Configure which routes to run middleware on
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Allow public paths
+  if (publicPaths.includes(pathname)) {
+    const token = request.cookies.get('token');
+    if (token) {
+      // If user is logged in, redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Get token from cookies
+  const token = request.cookies.get('token')?.value;
+  if (!token) {
+    // Redirect to login if no token
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  try {
+    const payload = await verifyToken(token) as TokenPayload | null;
+    if (!payload) {
+      // Clear invalid token and redirect to login
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('token');
+      return response;
+    }
+
+    // Check super admin routes
+    if (pathname.startsWith('/super-admin')) {
+      if (payload.role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+      return NextResponse.next();
+    }
+
+    // Check dashboard routes
+    if (pathname.startsWith('/dashboard')) {
+      if (!['ADMIN', 'STAFF'].includes(payload.role)) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+      return NextResponse.next();
+    }
+
+    return NextResponse.next();
+  } catch (error) {
+    // Clear invalid token and redirect to login
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('token');
+    return response;
+  }
+}
+
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - api/auth (auth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public/).*)',
+    '/',
+    '/login',
+    '/register',
+    '/dashboard/:path*',
+    '/super-admin/:path*',
   ],
 }; 

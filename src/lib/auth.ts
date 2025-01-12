@@ -8,60 +8,89 @@ interface LoginResponse {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'STAFF';
+  role: 'ADMIN' | 'STAFF' | 'SUPER_ADMIN';
   gymId?: string;
 }
 
 export async function signToken(payload: any) {
   try {
-    // debug('Creating JWT token', { data: { userId: payload.id, role: payload.role }});
     return await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('24h')
       .sign(secret);
   } catch (error) {
-    // debug('Error signing JWT token', { level: 'error', data: error });
     throw error;
   }
 }
 
 export async function verifyToken(token: string) {
   try {
-    // debug('Verifying JWT token');
     const { payload } = await jwtVerify(token, secret);
-    // debug('Token verified successfully', { data: { userId: payload.id, role: payload.role }});
     return payload;
   } catch (error) {
-    // debug('Token verification failed', { level: 'error', data: error });
     return null;
   }
 }
 
-export async function loginUser(email: string, password: string): Promise<LoginResponse | null> {
+export async function loginUser(email: string, password: string, role: 'ADMIN' | 'STAFF' | 'SUPER_ADMIN'): Promise<LoginResponse | null> {
   try {
-    debug('Attempting to find admin', { data: { email }});
-    // Check admin first
-    const admin = await prisma.admin.findUnique({ 
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        password: true,
-        gym: {
-          select: {
-            id: true
+    console.log('Login attempt:', { email, role });
+    
+    if (!role) {
+      console.error('Role is undefined');
+      return null;
+    }
+
+    if (role === 'SUPER_ADMIN') {
+      // Debug: Check all super admins
+      const allSuperAdmins = await prisma.superAdmin.findMany();
+      console.log('All super admins:', JSON.stringify(allSuperAdmins, null, 2));
+
+      const superAdmin = await prisma.superAdmin.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          password: true,
+        }
+      });
+
+      console.log('Login attempt details:', {
+        providedEmail: email,
+        providedPassword: password,
+        foundSuperAdmin: superAdmin,
+        passwordMatch: superAdmin ? superAdmin.password === password : false
+      });
+      
+      if (superAdmin && superAdmin.password === password) {
+        return {
+          id: superAdmin.id,
+          email: superAdmin.email,
+          name: `${superAdmin.firstName} ${superAdmin.lastName}`,
+          role: 'SUPER_ADMIN',
+        };
+      }
+    } else if (role === 'ADMIN') {
+      const admin = await prisma.admin.findUnique({ 
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          password: true,
+          gym: {
+            select: {
+              id: true
+            }
           }
         }
-      }
-    });
+      });
 
-    if (admin) {
-      // debug('Admin found, verifying password');
-      if (admin.password === password) {
-        // debug('Admin password verified');
+      if (admin && admin.password === password) {
         return {
           id: admin.id,
           email: admin.email,
@@ -70,28 +99,21 @@ export async function loginUser(email: string, password: string): Promise<LoginR
           gymId: admin.gym?.id
         };
       }
-      // debug('Admin password invalid');
-    }
+    } else {
+      const staff = await prisma.staff.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          password: true,
+          isActive: true,
+          gymId: true
+        }
+      });
 
-    debug('Attempting to find staff', { data: { email }});
-    // If not admin, check staff
-    const staff = await prisma.staff.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        password: true,
-        isActive: true,
-        gymId: true
-      }
-    });
-
-    if (staff && staff.isActive) {
-      // debug('Active staff found, verifying password');
-      if (staff.password === password) {
-        // debug('Staff password verified');
+      if (staff && staff.password === password && staff.isActive) {
         return {
           id: staff.id,
           email: staff.email,
@@ -100,15 +122,11 @@ export async function loginUser(email: string, password: string): Promise<LoginR
           gymId: staff.gymId
         };
       }
-      // debug('Staff password invalid');
-    } else if (staff) {
-      // debug('Inactive staff account attempted login', { level: 'warn', data: { email }});
     }
 
-    // debug('No valid user found', { level: 'warn', data: { email }});
     return null;
   } catch (error) {
-    // debug('Error during login', { level: 'error', data: error });
-    throw error;
+    console.error('Login error:', error);
+    return null;
   }
 } 

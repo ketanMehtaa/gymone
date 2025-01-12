@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = body;
+    const { email, password, role } = body;
 
     debug('Login credentials received', { data: { email }});
 
@@ -40,10 +40,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!role || !['ADMIN', 'STAFF', 'SUPER_ADMIN'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Valid role is required' },
+        { status: 400 }
+      );
+    }
+
     // Attempt login
     let user;
     try {
-      user = await loginUser(email, password);
+      user = await loginUser(email, password, role);
     } catch (e) {
       debug('Login function error', { level: 'error', data: e });
       return NextResponse.json(

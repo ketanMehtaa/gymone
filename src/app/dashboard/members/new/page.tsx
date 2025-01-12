@@ -45,9 +45,11 @@ export default function NewMemberPage() {
           throw new Error(data.error || 'Failed to fetch gym list');
         }
 
-        setGyms(data.data);
-        if (data.data.length > 0) {
-          setFormData(prev => ({ ...prev, gymId: data.data[0].id }));
+        const gymsData = Array.isArray(data) ? data : [];
+        setGyms(gymsData);
+        
+        if (gymsData.length > 0) {
+          setFormData(prev => ({ ...prev, gymId: gymsData[0].id }));
         }
       } catch (err) {
         console.error('Error loading gyms:', err);
