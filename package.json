@@ -86,6 +86,7 @@
     "nextjs-toploader": "^1.6.12",
     "nuqs": "^2.2.3",
     "postcss": "8.4.28",
+    "posthog-js": "^1.205.0",
     "prisma": "^6.2.1",
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
