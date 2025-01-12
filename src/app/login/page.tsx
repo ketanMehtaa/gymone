@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, Mail, User2 } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 export default function LoginPage() {
@@ -23,7 +23,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log('Submitting form data:', formData);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

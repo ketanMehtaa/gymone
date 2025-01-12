@@ -62,8 +62,8 @@ export async function POST(request: Request) {
     }
 
     // Create gym and admin in a transaction
-    const result = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>) => {
-      const gym = await tx.gym.create({
+    const result = await prisma.$transaction(async (prisma) => {
+      const gym = await prisma.gym.create({
         data: {
           name: validatedData.name,
           email: validatedData.email,
