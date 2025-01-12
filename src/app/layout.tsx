@@ -9,10 +9,7 @@ import { ErrorBoundary } from '@/lib/bugsnag';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'GymOne - Gym Management System',
-  description: 'Manage your gym efficiently',
-};
+
 
 export default function RootLayout({
   children,
@@ -25,7 +22,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="light"
             enableSystem
             disableTransitionOnChange
           >

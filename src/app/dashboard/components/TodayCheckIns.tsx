@@ -64,7 +64,7 @@ export default function TodayCheckIns() {
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Today's Check-ins</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Check-ins</h2>
         <p className="text-sm text-gray-500 mt-1">
           {checkIns.length} member{checkIns.length !== 1 ? 's' : ''} checked in today
         </p>

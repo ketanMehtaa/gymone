@@ -183,9 +183,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Today's Check-ins */}
+        {/* Today&apos;s Check-ins */}
         <div>
-          <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Today's Activity</h2>
+          <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Today&apos;s Activity</h2>
           <TodayCheckIns />
         </div>
       </div>

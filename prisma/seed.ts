@@ -1,4 +1,4 @@
-import { PrismaClient, MemberStatus, MembershipStatus } from '@prisma/client'
+import { PrismaClient, MemberStatus, } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -76,7 +76,6 @@ async function main() {
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         amount: 50.00,
-        status: MembershipStatus.ACTIVE,
         memberId: member.id,
         gymId: gym.id,
         staffId: staffMembers[0].id, // First staff member creates the memberships

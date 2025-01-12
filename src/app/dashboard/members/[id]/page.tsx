@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
@@ -47,11 +47,7 @@ export default function MemberDetailsPage({ params }: { params: { id: string } }
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMemberDetails();
-  }, [params.id]);
-
-  const fetchMemberDetails = async () => {
+  const fetchMemberDetails = useCallback(async () => {
     try {
       const res = await fetch(`/api/members/${params.id}`);
       const data = await res.json();
@@ -66,7 +62,11 @@ export default function MemberDetailsPage({ params }: { params: { id: string } }
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchMemberDetails();
+  }, [params.id, fetchMemberDetails]);
 
   const handleDelete = async () => {
     setDeleteLoading(true);

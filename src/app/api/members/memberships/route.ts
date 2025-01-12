@@ -20,6 +20,8 @@ const calculateMembershipStatus = (latestMembership: any | null): 'NONE' | 'EXPI
   return 'ACTIVE';
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const token = cookies().get('token')?.value;
