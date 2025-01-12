@@ -13,8 +13,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: 'admin@gymone.com',
+    password: 'admin123',
     role: 'ADMIN',
   });
 
