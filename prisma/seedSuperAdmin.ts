@@ -1,6 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
   try {
@@ -14,21 +14,27 @@ async function main() {
     // Create super admin with default values
     const superAdmin = await prisma.superAdmin.create({
       data: {
-        firstName: 'Super',
-        lastName: 'Admin',
-        email: 'super@admin.com',
-        password: 'admin123',
+        firstName: 'ketan',
+        lastName: 'mehta',
+        email: 'meetketanmehta@gmail.com',
+        password: '9412533733',
       },
     });
 
     console.log('Super admin created successfully:');
     console.log('Email:', superAdmin.email);
-    console.log('Password: admin123');
+    console.log('Password: 9412533733');
   } catch (error) {
     console.error('Error creating super admin:', error);
+    process.exit(1);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-main(); 
+main()
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });
